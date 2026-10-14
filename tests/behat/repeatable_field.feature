@@ -40,7 +40,7 @@ Feature: Repeatable sets course custom field
     And I press "Add new set"
     And I set the field "id_customfield_languages_2_1" to "Spanish"
     And I press "Save and display"
-    And I am on site homepage
+    And I am on course index
     Then I should see "Languages" in the ".customfield_languages .customfieldname" "css_element"
     And I should see "Portuguese" in the ".customfield_languages .customfieldvalue" "css_element"
     And I should see "Spanish" in the ".customfield_languages .customfieldvalue" "css_element"
