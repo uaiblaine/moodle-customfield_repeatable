@@ -140,9 +140,14 @@ Each branch numbers itself in its Moodle version's namespace (4.5 `20241007XX`, 
 
 ### Validation and dictionaries
 
-- Code checks run in `instance_form_validation()` → the engine's `local\validator`; core calls it
-  only for editable fields. Web services and the upload tool save without it, like the profile
-  field's sync paths; `instance_form_save()` still normalises and shapes pattern values.
+- Code checks run in one private method (`submitted_error()` → the engine's `local\validator`, built
+  with the STORED payload and the current user's `can_read_domain()`). The form calls it from
+  `instance_form_validation()`; **every other save path calls it again from `instance_form_save()`**
+  and throws `errorsaverejected` (the field name only, never a code, label or domain): web services
+  (`core_course_*_courses`), the course upload tool, group and cohort library functions, because
+  core skips `instance_form_validation()` there (gates CF29, CF30). The one path that writes without
+  the type is core's restore: it copies a value a user could already see on the source, and a crafted
+  backup is restore-capability-gated (residual, by design).
 - **No oracle on restricted dictionaries**: every path that turns a SUBMITTED code into an answer is
   decided on `can_read_domain()` of the editing user, with the stored codes of THIS instance as the
   only exemption (engine rules B11-B18).

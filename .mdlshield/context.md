@@ -31,7 +31,7 @@ and `customfield_pattern` (masks and checks). It is the second adapter of the en
 - `classes/data_controller.php`: `instance_form_validation()` builds the engine's validator with the
   payload STORED for this field and instance (`stored_payload()`, read from `customfield_data` by the
   controller's id AND its field id AND instance id, never the submission) and a closure deciding
-  `\local_dictionaries\api::can_read()` for the editing user. `instance_form_save()` normalises the
+  `\local_dictionaries\api::can_read()` for the editing user. `instance_form_save()` runs the same checks as the form (one shared private method), normalises the
   payload, writes the value through core's parent method and rewrites the projection rows in one
   delegated transaction. `export_value()` returns `local\summary::html()`: one line per set, every
   value through `s()`, never `format_text()`, because core prints it unescaped (course listings,
@@ -58,9 +58,11 @@ and `customfield_pattern` (masks and checks). It is the second adapter of the en
 - **`get_default_value()` is null**, so core's Report Builder filter does not wrap the JSON column
   in `COALESCE` with a default.
 - **An empty value is stored as `''`**, not `{}`, so core's "is empty" sees no value.
-- **Web services and the course upload tool skip the code checks** only where core skips
-  `instance_form_validation()`; on every save path the payload is normalised and pattern values are
-  stored in their configured shape.
+- **Every save path runs the same code checks** in `instance_form_save()` (form, web services, course
+  upload tool, group and cohort APIs), with the stored payload and the saving user's dictionary
+  rights, and refuses a failing value with one message that names the field only. The one path that
+  writes without the type is core's restore: it copies a value a user could already see on the source
+  course, and a crafted backup is gated by the restore capabilities. This residual is by design.
 - **Stored codes are resolved to labels without a visibility check** in the summary and display, as
   the dictionary plugin's contract allows; submitted codes are not.
 - A pattern column's error message comes from `customfield_pattern` already escaped and is passed
