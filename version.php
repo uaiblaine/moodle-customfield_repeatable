@@ -24,10 +24,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026042002;
-$plugin->requires  = 2026042000;
+$plugin->version   = 2025100600;
+$plugin->requires  = 2025100600;
 $plugin->component = 'customfield_repeatable';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v5.2-r1-dev';
-$plugin->supported = [502, 502];
-$plugin->dependencies = ['local_repeatable' => 2026042004];
+$plugin->release   = 'v5.1-r1';
+$plugin->supported = [501, 501];
+$plugin->dependencies = ['local_repeatable' => 2025100600];

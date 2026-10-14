@@ -26,21 +26,21 @@ concurrency:
 
 jobs:
   # One reusable-workflow call: the Moodle version this branch supports (version.php
-  # $plugin->supported), with the full PHP x DB matrix. At release every supported Moodle version
-  # gets its own MOODLE_<NNN>_STABLE branch with its own job here; keep each branch's job on a merge
+  # $plugin->supported), with the full PHP x DB matrix. Every supported Moodle version has its
+  # own MOODLE_<NNN>_STABLE branch with its own job here; keep each branch's job on a merge
   # between them. PHPUnit and Behat run on every runtime leg.
   #
-  # local_repeatable is a hard dependency (version.php): the engine this type adapts. It comes from
-  # main while the engine is developed there, and from MOODLE_502_STABLE from its release.
-  # local_dictionaries comes from its branch for the same Moodle version, so a contract change in
-  # either repo turns the other's CI red; customfield_pattern has one branch, main. Both are soft
+  # local_repeatable is a hard dependency (version.php): the engine this type adapts, from its
+  # branch for the same Moodle version. local_dictionaries also comes from its branch for the same
+  # Moodle version, so a contract change in either repo turns the other's CI red.
+  # customfield_pattern (Moodle 5.1 and later) has one branch, main. Both companions are soft
   # dependencies, installed so the tests that need them run.
-  ci-502:
-    name: Moodle 5.02
+  ci-501:
+    name: Moodle 5.01
     uses: moodle-an-hochschulen/moodle-workflows/.github/workflows/moodle-plugin-ci.yml@main
     with:
-      moodle-core-branch: MOODLE_502_STABLE
+      moodle-core-branch: MOODLE_501_STABLE
       plugin-dependencies: |
-        uaiblaine/moodle-local_repeatable,main
-        uaiblaine/moodle-local_dictionaries,MOODLE_502_STABLE
+        uaiblaine/moodle-local_repeatable,MOODLE_501_STABLE
+        uaiblaine/moodle-local_dictionaries,MOODLE_501_STABLE
         uaiblaine/moodle-customfield_pattern,main
