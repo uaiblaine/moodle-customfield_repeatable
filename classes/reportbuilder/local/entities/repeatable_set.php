@@ -18,6 +18,7 @@ namespace customfield_repeatable\reportbuilder\local\entities;
 
 use core_customfield\field_controller;
 use core_customfield\handler;
+use core_reportbuilder\local\helpers\database;
 use customfield_repeatable\local\field_schema;
 use customfield_repeatable\local\source;
 use local_repeatable\local\schema;
@@ -80,5 +81,35 @@ class repeatable_set extends sets {
      */
     protected function is_available(): bool {
         return $this->handler->can_view($this->field, 0);
+    }
+
+    /**
+     * Narrows the dictionary name-filter options to the codes saved in this entity's area.
+     *
+     * A shared field (Moodle 5.1+) keeps one field id across areas, so the engine's options query,
+     * which reads the projection by field id, would list codes saved in other areas. The projection
+     * row points at its {customfield_data} record, which core stamps with the area; the component and
+     * area are those of the handler the entity was built with, the ones the datasource join uses
+     * ({@see \customfield_repeatable\reportbuilder\local\helpers\area_sets::entities()}). They are
+     * bound, so no identifier check is needed here.
+     *
+     * @param string $alias The alias the projection table has in the options query.
+     * @return array{0: string, 1: array} SQL condition on the alias and its named parameters.
+     */
+    protected function filter_options_scope(string $alias): array {
+        $component = database::generate_param_name();
+        $area = database::generate_param_name();
+
+        return [
+            "EXISTS (SELECT 1
+                       FROM {customfield_data} fod
+                      WHERE fod.id = {$alias}.dataid
+                        AND fod.component = :{$component}
+                        AND fod.area = :{$area})",
+            [
+                $component => $this->handler->get_component(),
+                $area => $this->handler->get_area(),
+            ],
+        ];
     }
 }

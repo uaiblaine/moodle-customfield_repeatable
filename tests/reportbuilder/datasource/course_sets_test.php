@@ -302,4 +302,28 @@ final class course_sets_test extends sets_report_testcase {
         $filter = manager::get_report_from_persistent($report)->get_filter('repeatable_contacts:role_name');
         $this->assertSame(['7' => '&lt;script&gt;alert(1)&lt;/script&gt;'], $filter->get_options());
     }
+
+    /**
+     * The dictionary name filter of a shared field lists only the codes saved in the course area.
+     */
+    public function test_shared_field_filter_options_are_scoped_to_the_course_area(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $this->shared_field('sharedcontacts', [['core_course', 'course'], ['core_cohort', 'cohort']], [
+            ['key' => 'name', 'label' => 'Name', 'title' => true],
+            ['key' => 'role', 'label' => 'Role', 'mode' => 'dictionary_open', 'domain' => 'roles'],
+        ]);
+        $course = $this->getDataGenerator()->create_course();
+        $cohort = $this->cohort_with_id((int)$course->id, 'K1');
+        $this->save_sets('core_course', 'course', (int)$course->id, 'sharedcontacts', [['name' => 'Course', 'role' => 'A']]);
+        $this->save_sets('core_cohort', 'cohort', (int)$cohort->id, 'sharedcontacts', [['name' => 'Cohort', 'role' => 'B']]);
+
+        $report = $this->sets_report(course_sets::class, ['course:fullname', 'repeatable_sharedcontacts:role_name']);
+        manager::reset_caches();
+        $filter = manager::get_report_from_persistent($report)->get_filter('repeatable_sharedcontacts:role_name');
+        $options = array_keys($filter->get_options());
+        $this->assertContains('A', $options);
+        $this->assertNotContains('B', $options, 'A code saved in the other area is not offered');
+    }
 }

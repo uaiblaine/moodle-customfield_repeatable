@@ -73,14 +73,15 @@ abstract class sets_report_testcase extends core_reportbuilder_testcase {
      *
      * @param string $shortname The field's shortname.
      * @param array $areas Pairs [component, area] the category is enabled for.
+     * @param array $columns The field's columns ({@see \customfield_repeatable_generator::schema_json()}).
      * @return field_controller
      */
-    protected function shared_field(string $shortname, array $areas): field_controller {
+    protected function shared_field(string $shortname, array $areas, array $columns = ['Name', 'Role']): field_controller {
         $category = $this->getDataGenerator()->create_custom_field_category([
             'component' => 'core_customfield',
             'area' => 'shared',
         ]);
-        $field = $this->generator()->create_field(['Name', 'Role'], [
+        $field = $this->generator()->create_field($columns, [
             'categoryid' => $category->get('id'),
             'shortname' => $shortname,
             'name' => ucfirst($shortname),

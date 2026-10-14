@@ -179,8 +179,9 @@ Each branch numbers itself in its Moodle version's namespace (4.5 `20241007XX`, 
   `repeatable_<shortname>`, group `repeatable_group_<shortname>`, grouping
   `repeatable_grouping_<shortname>`; column names are the engine's. Each datasource test pins them.
 - PostgreSQL and MySQL/MariaDB only (`area_sets::db_supported()`), as the profile field.
-- Engine residual: `sets::name_filter_options()` lists the codes of the field in every area, so the
-  autocomplete options of a shared field's dictionary column include codes saved in other areas.
+- The dictionary name-filter options of a shared field are scoped to the area: `repeatable_set`
+  overrides the engine's `filter_options_scope()` with an `EXISTS` over `{customfield_data}` (alias
+  `fod`) on the handler's component and area, bound as parameters.
 - A field whose schema is unreadable keeps its rows: rewriters use `field_schema::parse()` (null →
   skip), never `from_configdata()` (empty schema → every set "vanished").
 
