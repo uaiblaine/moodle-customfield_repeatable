@@ -44,7 +44,7 @@ final class projection {
      * fields only); group and grouping values get no callback at all.
      *
      * The area is read from the record ({customfield_data}.component and area, which core stamps on
-     * every row from Moodle 5.0), so the course id never matches a group of the same id.
+     * every row from Moodle 5.1), so the course id never matches a group of the same id.
      *
      * @param int $courseid
      * @return int Number of records whose rows were rewritten.
