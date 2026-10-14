@@ -48,7 +48,7 @@ final class group_sets_test extends sets_report_testcase {
         $this->assertTrue(group_sets::is_available(), 'A grouping field');
 
         $grouping->delete();
-        \core_customfield\handler::reset_caches();
+        $this->reset_area_handlers();
         $this->assertFalse(group_sets::is_available());
 
         $this->area_field('core_group', 'group', 'teams');

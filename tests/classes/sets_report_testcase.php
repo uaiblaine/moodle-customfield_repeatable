@@ -69,6 +69,20 @@ abstract class sets_report_testcase extends core_reportbuilder_testcase {
     }
 
     /**
+     * Forget the field lists the area handlers cached, after a field or a shared category changes behind them.
+     *
+     * Moodle 5.1 keeps one handler per area class, each with its own reset;
+     * core_customfield's handler::reset_caches() exists from Moodle 5.2.
+     */
+    protected function reset_area_handlers(): void {
+        \core_course\customfield\course_handler::reset_caches();
+        \core_cohort\customfield\cohort_handler::reset_caches();
+        \core_group\customfield\group_handler::reset_caches();
+        \core_group\customfield\grouping_handler::reset_caches();
+        \core_customfield\customfield\shared_handler::reset_caches();
+    }
+
+    /**
      * A repeatable field in a shared category (Moodle 5.1+) enabled for some areas.
      *
      * @param string $shortname The field's shortname.
@@ -94,7 +108,7 @@ abstract class sets_report_testcase extends core_reportbuilder_testcase {
                 'itemid' => 0,
             ]))->create();
         }
-        handler::reset_caches();
+        $this->reset_area_handlers();
         return $field;
     }
 

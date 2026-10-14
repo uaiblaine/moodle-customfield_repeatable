@@ -199,6 +199,9 @@ Each branch numbers itself in its Moodle version's namespace (4.5 `20241007XX`, 
   `editingteacher`, who has `moodle/course:update` but not `local/dictionaries:view`.
 - `tests/privacy/provider_test.php` asserts `component_is_compliant()`: plugin CI never runs core's
   compliance sweep.
+- Area handlers are singletons per class on 5.1: a test that creates or deletes a field or enables
+  a shared category behind one calls `sets_report_testcase::reset_area_handlers()`;
+  `core_customfield\handler::reset_caches()` exists from 5.2 only.
 - `.mdlshield/config.yml` pins `versions: ["5.2"]`.
 
 ## When in doubt
