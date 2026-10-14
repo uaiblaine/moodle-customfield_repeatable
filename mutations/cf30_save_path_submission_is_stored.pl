@@ -1,0 +1,2 @@
+# instance_form_save(): the save path's validator takes the submitted value as the stored payload, so every submitted code is exempt.
+s~if \(\$this->submitted_error\(\$datanew->\{\$elementname\}, \$payload\) !== null\) \{~\$payload = payload::normalise(\$datanew->{\$elementname}, \$this->get_schema());\n        if (\$this->get_validator(is_string(\$datanew->{\$elementname}) ? \$datanew->{\$elementname} : '')->error(\$payload, false) !== null) {~s;

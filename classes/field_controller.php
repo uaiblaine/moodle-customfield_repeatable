@@ -144,8 +144,11 @@ class field_controller extends \core_customfield\field_controller {
     public function delete(): bool {
         global $DB;
 
+        $transaction = $DB->start_delegated_transaction();
         $DB->delete_records(source::TABLE, ['fieldid' => (int)$this->get('id')]);
-        return parent::delete();
+        $result = parent::delete();
+        $transaction->allow_commit();
+        return $result;
     }
 
     /**

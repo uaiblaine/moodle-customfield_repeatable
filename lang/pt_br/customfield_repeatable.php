@@ -25,6 +25,7 @@
 $string['columns'] = 'Colunas';
 $string['columns_help'] =
     'As colunas de cada conjunto, como um esquema JSON: {"version": 2, "columns": [{"key": "language", "label": "Idioma", "mode": "dictionary", "domain": "iso639", "title": true}, ...]}. Com JavaScript, o editor de colunas o escreve. Modos: free (livre), dictionary (somente códigos de um domínio do local_dictionaries), dictionary_open (qualquer código), pattern (máscara e/ou expressão regular do customfield_pattern; um objeto "pattern" com preset, mask, regex, regexerror e storeformat). Exatamente uma coluna é o título; até 3 aparecem na linha secundária. Uma coluna cuja chave guarda valores não pode ser removida nem ter a chave trocada; renomeie o rótulo.';
+$string['errorsaverejected'] = 'Os conjuntos repetíveis do campo {$a} não foram salvos: eles não passam nas verificações do campo.';
 $string['pluginname'] = 'Conjuntos repetíveis';
 $string['privacy:metadata:customfield_repeatable_set'] =
     'Uma cópia de cada conjunto do valor de um campo personalizado repetível, mantida para relatórios. O valor em si é guardado pelo núcleo em customfield_data.';

@@ -152,24 +152,15 @@ class data_controller extends \core_customfield\data_controller {
         if (!array_key_exists($elementname, $data)) {
             return [];
         }
-        $rawpayload = $data[$elementname];
-        $validator = $this->get_validator($this->stored_payload());
-        if (is_string($rawpayload) || $rawpayload === null) {
-            $rawerror = $validator->raw_error((string)$rawpayload);
-            if ($rawerror !== null) {
-                return [$elementname => $rawerror];
-            }
-        }
-
-        $payload = payload::normalise($rawpayload, $this->get_schema());
-        $error = $validator->error($payload, (bool)$this->get_field()->get_configdata_property('required'));
+        $payload = [];
+        $error = $this->submitted_error($data[$elementname], $payload);
         if ($error !== null) {
             return [$elementname => $error];
         }
 
         // The parent's uniqueness check compares this value with the stored ones: give it the JSON
         // as it would be stored, or '' so that an empty value is not checked.
-        $payload = $validator->for_storage($payload);
+        $payload = $this->get_validator('')->for_storage($payload);
         $data[$elementname] = empty($payload) ? '' : payload::encode($payload);
         return parent::instance_form_validation($data, $files);
     }
@@ -177,12 +168,16 @@ class data_controller extends \core_customfield\data_controller {
     /**
      * Save the submitted payload and its projection rows in one delegated transaction.
      *
-     * The payload is normalised and its pattern values put in their stored shape on every path
-     * (the form, web services, the course upload tool), whether or not it was validated. An empty
-     * payload is stored as '', so core's "is empty" filter and export see no value.
+     * Every save path (the form, web services, the course upload tool, the group and cohort APIs)
+     * runs the form's checks first ({@see self::submitted_error()}), with the stored payload and the
+     * current user's dictionary rights; a submission that fails them is refused with one uniform
+     * message that names the field and nothing the user submitted. Then the payload is normalised
+     * and its pattern values put in their stored shape. An empty payload is stored as '', so core's
+     * "is empty" filter and export see no value. Core's restore writes without this class.
      *
      * @param \stdClass $datanew
      * @return void
+     * @throws \moodle_exception When the submitted value fails the field's checks.
      */
     public function instance_form_save(\stdClass $datanew) {
         global $DB;
@@ -191,7 +186,16 @@ class data_controller extends \core_customfield\data_controller {
         if (!property_exists($datanew, $elementname)) {
             return;
         }
-        $payload = payload::normalise($datanew->{$elementname}, $this->get_schema());
+        // Core's web services and group and cohort APIs save without validating the form: the same
+        // checks run here, so no path stores a code the editing user could not have submitted.
+        $payload = [];
+        if ($this->submitted_error($datanew->{$elementname}, $payload) !== null) {
+            throw new \moodle_exception('errorsaverejected', 'customfield_repeatable', '', format_string(
+                (string)$this->get_field()->get('name'),
+                true,
+                ['context' => \context_system::instance()]
+            ));
+        }
         $payload = $this->get_validator('')->for_storage($payload);
 
         $submitted = clone $datanew;
@@ -222,11 +226,14 @@ class data_controller extends \core_customfield\data_controller {
     public function delete() {
         global $DB;
 
+        $transaction = $DB->start_delegated_transaction();
         $dataid = (int)$this->get('id');
         if ($dataid > 0) {
             $DB->delete_records(source::TABLE, ['dataid' => $dataid]);
         }
-        return parent::delete();
+        $result = parent::delete();
+        $transaction->allow_commit();
+        return $result;
     }
 
     /**
@@ -296,6 +303,30 @@ class data_controller extends \core_customfield\data_controller {
         if ($schema !== null) {
             projector::reproject_record(new source(), $newid, $schema);
         }
+    }
+
+    /**
+     * The first error of a submitted value, as the form validation reports it.
+     *
+     * The one place the engine validator is built for a submission, shared by the form
+     * ({@see self::instance_form_validation()}) and every other save path
+     * ({@see self::instance_form_save()}), so they cannot drift: the payload STORED for this field and
+     * instance, the current user's dictionary rights, and the field's required flag.
+     *
+     * @param mixed $raw The submitted value.
+     * @param array $payload Set to the normalised payload.
+     * @return string|null The error text, null when the value passes.
+     */
+    private function submitted_error($raw, array &$payload): ?string {
+        $validator = $this->get_validator($this->stored_payload());
+        if (is_string($raw) || $raw === null) {
+            $rawerror = $validator->raw_error((string)$raw);
+            if ($rawerror !== null) {
+                return $rawerror;
+            }
+        }
+        $payload = payload::normalise($raw, $this->get_schema());
+        return $validator->error($payload, (bool)$this->get_field()->get_configdata_property('required'));
     }
 
     /**

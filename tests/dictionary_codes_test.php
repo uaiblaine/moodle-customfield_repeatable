@@ -85,17 +85,19 @@ final class dictionary_codes_test extends \advanced_testcase {
     }
 
     /**
-     * A course with a stored payload of one set, and an editing teacher in it.
+     * A course with a stored payload of one set (written without the save checks), and an editing teacher in it.
      *
      * @param array $set key => code.
      * @return array [course id, teacher]
      */
     private function course_with(array $set): array {
         $course = $this->getDataGenerator()->create_course();
-        course_handler::create()->instance_form_save((object)[
-            'id' => $course->id,
-            $this->elementname => json_encode(['@@ID#1' => $set]),
-        ]);
+        // Seeded below the type, as an older record: the save path now refuses what the form would
+        // (an inactive code, a column whose parent is empty), and these tests need such stored values.
+        $data = course_handler::create()->get_instance_data((int)$course->id, true)[(int)$this->field->get('id')];
+        $data->set('value', json_encode(['@@ID#1' => $set]));
+        $data->set('contextid', \context_course::instance($course->id)->id);
+        $data->save();
         $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
         return [(int)$course->id, $teacher];
     }
