@@ -48,9 +48,10 @@ class repeatable_set extends sets {
     /**
      * Constructor.
      *
-     * @param field_controller $field A repeatable field the area's handler lists (its own or a shared one).
-     * @param handler $handler The handler of the area the report lists, never the field's own: a
-     *                         shared field's handler is core_customfield's, which shows it to everyone.
+     * @param field_controller $field A repeatable field the area's handler lists.
+     * @param handler $handler The handler of the area the report lists, as core's custom field columns
+     *                         ask it (the field's own handler is the same one on Moodle 4.5, which
+     *                         has no shared fields).
      */
     public function __construct(field_controller $field, handler $handler) {
         parent::__construct(source::TABLE, (int)$field->get('id'));
@@ -84,14 +85,15 @@ class repeatable_set extends sets {
     }
 
     /**
-     * Narrows the dictionary name-filter options to the codes saved in this entity's area.
+     * Narrows the dictionary name-filter options to the codes of records saved in this entity's area.
      *
-     * A shared field (Moodle 5.1+) keeps one field id across areas, so the engine's options query,
-     * which reads the projection by field id, would list codes saved in other areas. The projection
-     * row points at its {customfield_data} record, which core stamps with the area; the component and
-     * area are those of the handler the entity was built with, the ones the datasource join uses
-     * ({@see \customfield_repeatable\reportbuilder\local\helpers\area_sets::entities()}). They are
-     * bound, so no identifier check is needed here.
+     * The engine's options query reads the projection by field id. The projection row points at its
+     * {customfield_data} record; Moodle 4.5 stamps no area on it (core does from 5.1), so the area is
+     * the record's field's category, and with no shared fields the field id already pins it: the
+     * condition keeps the options to rows whose record is there and belongs to this area, as the
+     * datasource join does ({@see \customfield_repeatable\reportbuilder\local\helpers\area_sets::entities()}).
+     * The component and area are those of the handler the entity was built with, bound, so no
+     * identifier check is needed here.
      *
      * @param string $alias The alias the projection table has in the options query.
      * @return array{0: string, 1: array} SQL condition on the alias and its named parameters.
@@ -103,9 +105,11 @@ class repeatable_set extends sets {
         return [
             "EXISTS (SELECT 1
                        FROM {customfield_data} fod
+                       JOIN {customfield_field} fof ON fof.id = fod.fieldid
+                       JOIN {customfield_category} foc ON foc.id = fof.categoryid
                       WHERE fod.id = {$alias}.dataid
-                        AND fod.component = :{$component}
-                        AND fod.area = :{$area})",
+                        AND foc.component = :{$component}
+                        AND foc.area = :{$area})",
             [
                 $component => $this->handler->get_component(),
                 $area => $this->handler->get_area(),

@@ -10,6 +10,13 @@ Moodle 4.5 LTS branch (`MOODLE_405_STABLE`): version `2024100700`, release `v4.5
 `MATURITY_STABLE`, `$plugin->supported = [405, 405]`, requires `local_repeatable` 2024100700, CI
 against core `MOODLE_405_STABLE`.
 
+Moodle 4.5 port: `{customfield_data}` has no `component` and `area` columns there and there are no
+shared fields (core adds both in 5.1), so `local\projection::reproject_course()`, the Report
+Builder join (`area_sets::entities()`) and the name-filter options scope
+(`repeatable_set::filter_options_scope()`) read the area from the record's field's
+`{customfield_category}`. The shared-field tests are not on this branch; two course-source tests hold
+the record check instead (a record deleted behind the type lists no set and offers no code).
+
 First release on the one-branch-per-Moodle-version layout and the first `MATURITY_STABLE` one:
 `MOODLE_405_STABLE` (`v4.5-r1`), `MOODLE_501_STABLE` (`v5.1-r1`), `MOODLE_502_STABLE` (`v5.2-r1`,
 also `main`) and `MOODLE_503_STABLE` (`v5.3-r1`). Each branch numbers itself in its Moodle version's

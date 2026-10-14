@@ -16,7 +16,6 @@
 
 namespace customfield_repeatable\reportbuilder\datasource;
 
-use core_reportbuilder\manager;
 use customfield_repeatable\tests\sets_report_testcase;
 
 /**
@@ -97,30 +96,6 @@ final class cohort_sets_test extends sets_report_testcase {
     }
 
     /**
-     * A shared field (Moodle 5.1+) lists only the values saved in the cohort area, never a course's of the same id.
-     */
-    public function test_shared_field_lists_only_cohort_area_values(): void {
-        global $DB;
-
-        $this->resetAfterTest();
-        $this->setAdminUser();
-
-        $this->shared_field('sharedcontacts', [['core_course', 'course'], ['core_cohort', 'cohort']]);
-        $course = $this->getDataGenerator()->create_course();
-        $cohort = $this->cohort_with_id((int)$course->id, 'K1');
-
-        $this->save_sets('core_cohort', 'cohort', (int)$cohort->id, 'sharedcontacts', [['name' => 'Cohort', 'role' => 'A']]);
-        $this->save_sets('core_course', 'course', (int)$course->id, 'sharedcontacts', [
-            ['name' => 'Course1', 'role' => 'B'],
-            ['name' => 'Course2', 'role' => 'C'],
-        ]);
-        $this->assertSame(3, $DB->count_records('customfield_repeatable_set', ['instanceid' => $cohort->id]));
-
-        $report = $this->sets_report(cohort_sets::class, ['cohort:name', 'repeatable_sharedcontacts:name']);
-        $this->assertSame([[$cohort->name, 'Cohort']], $this->rows_of($report, [$cohort->name]));
-    }
-
-    /**
      * Visibility cases: the viewer, and the expected availability.
      *
      * @return array
@@ -174,25 +149,6 @@ final class cohort_sets_test extends sets_report_testcase {
     }
 
     /**
-     * A shared field (Moodle 5.1+) is available as the cohort handler decides, as core's own column is.
-     *
-     * Core asks the handler of the area it lists, not the field's own: core_customfield's shared
-     * handler shows every shared field to everyone, the cohort handler only to cohort viewers.
-     */
-    public function test_shared_field_availability_is_the_area_handlers(): void {
-        $this->resetAfterTest();
-        $this->setAdminUser();
-
-        $this->shared_field('sharedcontacts', [['core_cohort', 'cohort']]);
-        $report = $this->sets_report(cohort_sets::class, []);
-
-        $this->setUser($this->getDataGenerator()->create_user());
-        [$ours, $core] = $this->availability($report, 'repeatable_sharedcontacts', 'cohort:customfield_sharedcontacts');
-        $this->assertFalse($core, 'Core hides it from a user who cannot view cohorts');
-        $this->assertFalse($ours, 'The sets follow core');
-    }
-
-    /**
      * The column and filter identifiers saved reports persist do not change: "repeatable_<shortname>:<name>".
      */
     public function test_column_and_filter_identifiers_are_stable(): void {
@@ -230,29 +186,5 @@ final class cohort_sets_test extends sets_report_testcase {
 
         $report = $this->sets_report(cohort_sets::class, ['cohort:name', 'repeatable_contacts:name']);
         $this->assertSame([['K1', '&lt;b&gt;A&lt;/b&gt;']], $this->rows_of($report, ['K1']));
-    }
-
-    /**
-     * The dictionary name filter of a shared field lists only the codes saved in the cohort area.
-     */
-    public function test_shared_field_filter_options_are_scoped_to_the_cohort_area(): void {
-        $this->resetAfterTest();
-        $this->setAdminUser();
-
-        $this->shared_field('sharedcontacts', [['core_course', 'course'], ['core_cohort', 'cohort']], [
-            ['key' => 'name', 'label' => 'Name', 'title' => true],
-            ['key' => 'role', 'label' => 'Role', 'mode' => 'dictionary_open', 'domain' => 'roles'],
-        ]);
-        $course = $this->getDataGenerator()->create_course();
-        $cohort = $this->cohort_with_id((int)$course->id, 'K1');
-        $this->save_sets('core_course', 'course', (int)$course->id, 'sharedcontacts', [['name' => 'Course', 'role' => 'A']]);
-        $this->save_sets('core_cohort', 'cohort', (int)$cohort->id, 'sharedcontacts', [['name' => 'Cohort', 'role' => 'B']]);
-
-        $report = $this->sets_report(cohort_sets::class, ['cohort:name', 'repeatable_sharedcontacts:role_name']);
-        manager::reset_caches();
-        $filter = manager::get_report_from_persistent($report)->get_filter('repeatable_sharedcontacts:role_name');
-        $options = array_keys($filter->get_options());
-        $this->assertContains('B', $options);
-        $this->assertNotContains('A', $options, 'A code saved in the other area is not offered');
     }
 }

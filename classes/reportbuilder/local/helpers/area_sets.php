@@ -30,9 +30,9 @@ use customfield_repeatable\reportbuilder\local\entities\repeatable_set;
  * Shared by the datasources of every area ({@see \customfield_repeatable\reportbuilder\datasource\course_sets},
  * cohort_sets, group_sets). The fields are listed as core lists them for its own custom field columns
  * ({@see \core_reportbuilder\local\helpers\custom_fields::get_columns()}): the area handler's
- * get_categories_with_fields(), which includes the shared categories (Moodle 5.1+) enabled for the
- * area. Each field becomes one entity whose projection rows are joined on the instance and the field,
- * and on the area the value was saved in, because a shared field keeps one field id across areas.
+ * get_categories_with_fields(). Each field becomes one entity whose projection rows are joined on the
+ * instance and the field, and on the area of the value's record, read from its field's category
+ * because Moodle 4.5 has no area columns on {customfield_data} (core adds them in 5.1).
  *
  * @package    customfield_repeatable
  * @copyright  2026 Anderson Blaine
@@ -67,7 +67,7 @@ final class area_sets {
     }
 
     /**
-     * The repeatable fields an area's handler lists, its own and the enabled shared ones, by id.
+     * The repeatable fields an area's handler lists, by id.
      *
      * @param handler $handler
      * @return field_controller[]
@@ -89,11 +89,12 @@ final class area_sets {
      * One entity per repeatable field of an area, joined to the area's instance table.
      *
      * The projection rows are joined on the instance id and the field id, and only when the
-     * {customfield_data} record they project was saved in this area: core stamps the area on every
-     * record (Moodle 5.0+), and a shared field holds the values of several areas under one field id,
-     * so a cohort's sets would otherwise appear under the course of the same id. Report Builder joins
-     * take no parameters, so the component and area are written into the SQL: they are checked to be
-     * plain identifiers first, and the field id is cast.
+     * {customfield_data} record they project still exists in this area. On Moodle 4.5 a record
+     * carries no area (core stamps it from 5.1) and there are no shared fields, so the area is the one
+     * of the record's field's category: the field id already pins it, and the check keeps the join to
+     * rows whose record is there and belongs to this area, as the 5.x branches' check does. Report
+     * Builder joins take no parameters, so the component and area are written into the SQL: they are
+     * checked to be plain identifiers first, and the field id is cast.
      *
      * @param handler $handler The area's handler: it lists the fields and decides their visibility.
      * @param string $entityprefix Prefix of each entity name, followed by the field's shortname.
@@ -127,6 +128,8 @@ final class area_sets {
 
             $setalias = $entity->get_table_alias(source::TABLE);
             $dataalias = database::generate_alias();
+            $fieldalias = database::generate_alias();
+            $categoryalias = database::generate_alias();
             $entity->add_joins($parentjoins);
             $entity->add_join(
                 "LEFT JOIN {" . source::TABLE . "} {$setalias}
@@ -135,9 +138,11 @@ final class area_sets {
                        AND EXISTS (
                                SELECT 1
                                  FROM {customfield_data} {$dataalias}
+                                 JOIN {customfield_field} {$fieldalias} ON {$fieldalias}.id = {$dataalias}.fieldid
+                                 JOIN {customfield_category} {$categoryalias} ON {$categoryalias}.id = {$fieldalias}.categoryid
                                 WHERE {$dataalias}.id = {$setalias}.dataid
-                                  AND {$dataalias}.component = '{$component}'
-                                  AND {$dataalias}.area = '{$area}'
+                                  AND {$categoryalias}.component = '{$component}'
+                                  AND {$categoryalias}.area = '{$area}'
                            )"
             );
             $entities[] = $entity;

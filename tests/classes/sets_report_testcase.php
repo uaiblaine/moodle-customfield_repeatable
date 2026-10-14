@@ -18,7 +18,6 @@ namespace customfield_repeatable\tests;
 
 use core_customfield\field_controller;
 use core_customfield\handler;
-use core_customfield\shared;
 use core_reportbuilder\local\helpers\report;
 use core_reportbuilder\local\models\report as report_model;
 use core_reportbuilder\manager;
@@ -69,57 +68,16 @@ abstract class sets_report_testcase extends core_reportbuilder_testcase {
     }
 
     /**
-     * A repeatable field in a shared category (Moodle 5.1+) enabled for some areas.
+     * Forget the field lists the area handlers cached, after a field is created or deleted behind them.
      *
-     * @param string $shortname The field's shortname.
-     * @param array $areas Pairs [component, area] the category is enabled for.
-     * @param array $columns The field's columns ({@see \customfield_repeatable_generator::schema_json()}).
-     * @return field_controller
+     * Moodle 4.5 keeps one handler per area class, each with its own reset; core_customfield's
+     * handler::reset_caches() exists from Moodle 5.2.
      */
-    protected function shared_field(string $shortname, array $areas, array $columns = ['Name', 'Role']): field_controller {
-        $category = $this->getDataGenerator()->create_custom_field_category([
-            'component' => 'core_customfield',
-            'area' => 'shared',
-        ]);
-        $field = $this->generator()->create_field($columns, [
-            'categoryid' => $category->get('id'),
-            'shortname' => $shortname,
-            'name' => ucfirst($shortname),
-        ]);
-        foreach ($areas as [$component, $area]) {
-            (new shared(0, (object)[
-                'categoryid' => $category->get('id'),
-                'component' => $component,
-                'area' => $area,
-                'itemid' => 0,
-            ]))->create();
-        }
-        handler::reset_caches();
-        return $field;
-    }
-
-    /**
-     * A cohort with a given id, inserted as core's own shared-field test does, so two areas share an instance id.
-     *
-     * @param int $id The id the cohort takes (another area's instance id).
-     * @param string $name
-     * @return \stdClass The cohort record.
-     */
-    protected function cohort_with_id(int $id, string $name): \stdClass {
-        global $DB;
-
-        $DB->insert_record_raw('cohort', [
-            'id' => $id,
-            'contextid' => \core\context\system::instance()->id,
-            'name' => $name,
-            'idnumber' => '',
-            'descriptionformat' => FORMAT_HTML,
-            'visible' => 1,
-            'component' => '',
-            'timecreated' => time(),
-            'timemodified' => time(),
-        ], false, false, true);
-        return $DB->get_record('cohort', ['id' => $id], '*', MUST_EXIST);
+    protected function reset_area_handlers(): void {
+        \core_course\customfield\course_handler::reset_caches();
+        \core_cohort\customfield\cohort_handler::reset_caches();
+        \core_group\customfield\group_handler::reset_caches();
+        \core_group\customfield\grouping_handler::reset_caches();
     }
 
     /**

@@ -43,8 +43,9 @@ final class projection {
      * (core_customfield\handler::restore_define_structure() reads get_instance_data(), visible
      * fields only); group and grouping values get no callback at all.
      *
-     * The area is read from the record ({customfield_data}.component and area, which core stamps on
-     * every row from Moodle 5.0), so the course id never matches a group of the same id.
+     * The area is read from the field's category ({customfield_category}.component and area): on
+     * Moodle 4.5 {customfield_data} has no area columns and there are no shared fields (core adds
+     * both in 5.1), so a field belongs to one area. The course id never matches a group of the same id.
      *
      * @param int $courseid
      * @return int Number of records whose rows were rewritten.
@@ -59,12 +60,13 @@ final class projection {
             "SELECT d.id, d.fieldid, d.value, f.configdata
                FROM {customfield_data} d
                JOIN {customfield_field} f ON f.id = d.fieldid
+               JOIN {customfield_category} c ON c.id = f.categoryid
               WHERE f.type = :type
                 AND (
-                       (d.component = :coursecomponent AND d.area = :coursearea AND d.instanceid = :courseid)
-                    OR (d.component = :groupcomponent AND d.area = :grouparea
+                       (c.component = :coursecomponent AND c.area = :coursearea AND d.instanceid = :courseid)
+                    OR (c.component = :groupcomponent AND c.area = :grouparea
                         AND d.instanceid IN (SELECT g.id FROM {groups} g WHERE g.courseid = :groupcourseid))
-                    OR (d.component = :groupingcomponent AND d.area = :groupingarea
+                    OR (c.component = :groupingcomponent AND c.area = :groupingarea
                         AND d.instanceid IN (SELECT gg.id FROM {groupings} gg WHERE gg.courseid = :groupingcourseid))
                     )
            ORDER BY d.id ASC",

@@ -111,27 +111,30 @@ final class course_sets_test extends sets_report_testcase {
     }
 
     /**
-     * A shared field (Moodle 5.1+) lists only the values saved in the course area, never a cohort's of the same id.
+     * Only the rows of a record that is there, in the course area, are listed; rows left behind by a deleted record are not.
+     *
+     * Moodle 4.5 has no shared fields, so the field id already pins the area; the join's check on the
+     * record (its field's category names the area) still drops the rows of a {customfield_data} record
+     * deleted behind the type, until the daily task purges them.
      */
-    public function test_shared_field_lists_only_course_area_values(): void {
+    public function test_rows_of_a_deleted_record_are_not_listed(): void {
         global $DB;
 
         $this->resetAfterTest();
         $this->setAdminUser();
 
-        $this->shared_field('sharedcontacts', [['core_course', 'course'], ['core_cohort', 'cohort']]);
-        $course = $this->getDataGenerator()->create_course(['fullname' => 'C1']);
-        $this->cohort_with_id((int)$course->id, 'Same id');
+        $field = $this->area_field('core_course', 'course', 'contacts');
+        $course1 = $this->getDataGenerator()->create_course(['fullname' => 'C1']);
+        $course2 = $this->getDataGenerator()->create_course(['fullname' => 'C2']);
+        $this->save_sets('core_course', 'course', (int)$course1->id, 'contacts', [['name' => 'Ann', 'role' => 'Head']]);
+        $this->save_sets('core_course', 'course', (int)$course2->id, 'contacts', [['name' => 'Bob', 'role' => 'Clerk']]);
 
-        $this->save_sets('core_course', 'course', (int)$course->id, 'sharedcontacts', [['name' => 'Course', 'role' => 'A']]);
-        $this->save_sets('core_cohort', 'cohort', (int)$course->id, 'sharedcontacts', [
-            ['name' => 'Cohort1', 'role' => 'B'],
-            ['name' => 'Cohort2', 'role' => 'C'],
-        ]);
-        $this->assertSame(3, $DB->count_records('customfield_repeatable_set', ['instanceid' => $course->id]));
+        // A direct delete behind the type: the record goes, its projection row stays.
+        $DB->delete_records('customfield_data', ['fieldid' => $field->get('id'), 'instanceid' => $course2->id]);
+        $this->assertSame(1, $DB->count_records('customfield_repeatable_set', ['instanceid' => $course2->id]));
 
-        $report = $this->sets_report(course_sets::class, ['course:fullname', 'repeatable_sharedcontacts:name']);
-        $this->assertSame([['C1', 'Course']], $this->rows_of($report, ['C1']));
+        $report = $this->sets_report(course_sets::class, ['course:fullname', 'repeatable_contacts:name']);
+        $this->assertSame([['C1', 'Ann'], ['C2', '']], $this->rows_of($report, ['C1', 'C2']));
     }
 
     /**
@@ -304,26 +307,34 @@ final class course_sets_test extends sets_report_testcase {
     }
 
     /**
-     * The dictionary name filter of a shared field lists only the codes saved in the course area.
+     * The dictionary name filter lists only the codes of records that are there, in the course area.
+     *
+     * The options are read from the projection by field id; the entity's scope keeps them to rows
+     * whose {customfield_data} record exists in the course area (its field's category), so the code
+     * of a record deleted behind the type is not offered.
      */
-    public function test_shared_field_filter_options_are_scoped_to_the_course_area(): void {
+    public function test_filter_options_skip_the_rows_of_a_deleted_record(): void {
+        global $DB;
+
         $this->resetAfterTest();
         $this->setAdminUser();
 
-        $this->shared_field('sharedcontacts', [['core_course', 'course'], ['core_cohort', 'cohort']], [
+        $field = $this->area_field('core_course', 'course', 'contacts', [
             ['key' => 'name', 'label' => 'Name', 'title' => true],
             ['key' => 'role', 'label' => 'Role', 'mode' => 'dictionary_open', 'domain' => 'roles'],
         ]);
-        $course = $this->getDataGenerator()->create_course();
-        $cohort = $this->cohort_with_id((int)$course->id, 'K1');
-        $this->save_sets('core_course', 'course', (int)$course->id, 'sharedcontacts', [['name' => 'Course', 'role' => 'A']]);
-        $this->save_sets('core_cohort', 'cohort', (int)$cohort->id, 'sharedcontacts', [['name' => 'Cohort', 'role' => 'B']]);
+        $course1 = $this->getDataGenerator()->create_course();
+        $course2 = $this->getDataGenerator()->create_course();
+        $this->save_sets('core_course', 'course', (int)$course1->id, 'contacts', [['name' => 'Kept', 'role' => 'A']]);
+        $this->save_sets('core_course', 'course', (int)$course2->id, 'contacts', [['name' => 'Gone', 'role' => 'B']]);
+        $DB->delete_records('customfield_data', ['fieldid' => $field->get('id'), 'instanceid' => $course2->id]);
+        $this->assertSame(1, $DB->count_records('customfield_repeatable_set', ['instanceid' => $course2->id]));
 
-        $report = $this->sets_report(course_sets::class, ['course:fullname', 'repeatable_sharedcontacts:role_name']);
+        $report = $this->sets_report(course_sets::class, ['course:fullname', 'repeatable_contacts:role_name']);
         manager::reset_caches();
-        $filter = manager::get_report_from_persistent($report)->get_filter('repeatable_sharedcontacts:role_name');
+        $filter = manager::get_report_from_persistent($report)->get_filter('repeatable_contacts:role_name');
         $options = array_keys($filter->get_options());
         $this->assertContains('A', $options);
-        $this->assertNotContains('B', $options, 'A code saved in the other area is not offered');
+        $this->assertNotContains('B', $options, 'The code of a deleted record is not offered');
     }
 }

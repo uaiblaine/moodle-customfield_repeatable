@@ -76,9 +76,8 @@ restricted dictionary the user keeps the codes already stored and cannot submit 
   are available exactly when core shows its own custom field column to the viewer. A source is
   offered on PostgreSQL and MySQL/MariaDB only, once its area has a repeatable field. A report
   should use one repeatable field: two fields in one report multiply each other's sets.
-- Not yet one row per set (follow-ups): content bank, question, report custom fields, and the shared
-  custom field area as a report source of its own. Shared fields enabled for the course, cohort,
-  group or grouping area appear in that area's source, each with that area's values only.
+- Not yet one row per set (follow-ups): content bank and question custom fields. Moodle 4.5 has no
+  shared custom fields (core adds them in 5.1).
 
 
 Capabilities

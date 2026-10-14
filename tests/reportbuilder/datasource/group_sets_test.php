@@ -48,7 +48,7 @@ final class group_sets_test extends sets_report_testcase {
         $this->assertTrue(group_sets::is_available(), 'A grouping field');
 
         $grouping->delete();
-        \core_customfield\handler::reset_caches();
+        $this->reset_area_handlers();
         $this->assertFalse(group_sets::is_available());
 
         $this->area_field('core_group', 'group', 'teams');
@@ -114,45 +114,6 @@ final class group_sets_test extends sets_report_testcase {
     }
 
     /**
-     * A field shared by the group and grouping areas (Moodle 5.1+) lists each area's values under its own entity.
-     *
-     * A group and a grouping share an id here, so only the area recorded on each value tells them apart.
-     */
-    public function test_shared_field_lists_each_area_under_its_own_entity(): void {
-        global $DB;
-
-        $this->resetAfterTest();
-        $this->setAdminUser();
-
-        $this->shared_field('sharedplans', [['core_group', 'group'], ['core_group', 'grouping']]);
-        $course = $this->getDataGenerator()->create_course();
-        $group = $this->getDataGenerator()->create_group(['courseid' => $course->id, 'name' => 'G1']);
-        $DB->insert_record_raw('groupings', [
-            'id' => $group->id,
-            'courseid' => $course->id,
-            'name' => 'P1',
-            'idnumber' => '',
-            'descriptionformat' => FORMAT_HTML,
-            'timecreated' => time(),
-            'timemodified' => time(),
-        ], false, false, true);
-        $this->getDataGenerator()->create_grouping_group(['groupingid' => $group->id, 'groupid' => $group->id]);
-
-        $this->save_sets('core_group', 'group', (int)$group->id, 'sharedplans', [['name' => 'Group', 'role' => 'A']]);
-        $this->save_sets('core_group', 'grouping', (int)$group->id, 'sharedplans', [
-            ['name' => 'Grouping1', 'role' => 'B'],
-            ['name' => 'Grouping2', 'role' => 'C'],
-        ]);
-        $this->assertSame(3, $DB->count_records('customfield_repeatable_set', ['instanceid' => $group->id]));
-
-        $report = $this->sets_report(group_sets::class, ['group:name', 'repeatable_group_sharedplans:name']);
-        $this->assertSame([['G1', 'Group']], $this->rows_of($report, ['G1']));
-
-        $report = $this->sets_report(group_sets::class, ['grouping:name', 'repeatable_grouping_sharedplans:name']);
-        $this->assertSame([['P1', 'Grouping1'], ['P1', 'Grouping2']], $this->rows_of($report, ['P1']));
-    }
-
-    /**
      * Visibility cases: the viewer, whether the global course is the teacher's course, and the expected availability.
      *
      * @return array
@@ -205,31 +166,6 @@ final class group_sets_test extends sets_report_testcase {
         [$ours, $core] = $this->availability($report, 'repeatable_grouping_plans', 'grouping:customfield_plans');
         $this->assertSame($expected, $core, 'Core decides as expected for the grouping field');
         $this->assertSame($core, $ours, 'The grouping sets follow core');
-    }
-
-    /**
-     * A shared field (Moodle 5.1+) is available as the group and grouping handlers decide, as core's own column is.
-     *
-     * Core asks the handler of the area it lists, not the field's own: core_customfield's shared
-     * handler shows every shared field to everyone, the group handlers only to group managers and viewers.
-     */
-    public function test_shared_field_availability_is_the_area_handlers(): void {
-        $this->resetAfterTest();
-        $this->setAdminUser();
-
-        $this->shared_field('sharedplans', [['core_group', 'group'], ['core_group', 'grouping']]);
-        $report = $this->sets_report(group_sets::class, []);
-
-        $this->setUser($this->getDataGenerator()->create_user());
-        foreach (['group', 'grouping'] as $area) {
-            [$ours, $core] = $this->availability(
-                $report,
-                "repeatable_{$area}_sharedplans",
-                "{$area}:customfield_sharedplans"
-            );
-            $this->assertFalse($core, "Core hides the {$area} field from a plain user");
-            $this->assertFalse($ours, "The {$area} sets follow core");
-        }
     }
 
     /**

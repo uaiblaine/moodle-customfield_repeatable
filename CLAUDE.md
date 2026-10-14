@@ -131,7 +131,7 @@ Each branch numbers itself in its Moodle version's namespace (4.5 `20241007XX`, 
   (`handler::restore_define_structure()` reads visible fields; `NOTVISIBLE` hides from everyone)
   and never for groups or groupings: the `course_restored` observer rebuilds the course's, groups'
   and groupings' values. `reproject_course()` matches the area on `customfield_data.component/area`,
-  which exist from Moodle 5.0: **the 4.5 branch reads it from the field's `customfield_category`.**
+  which exist from Moodle 5.1: **the 4.5 branch reads it from the field's `customfield_category`.**
 - **The configuration form is a modal `dynamic_form`**: core defines it, then renders it inside
   `start_collecting_javascript_requirements()`, so a `js_call_amd()` made while defining is lost.
   Both modules are required in the elements' render methods (`classes/form/`); never move them to
@@ -169,8 +169,11 @@ Each branch numbers itself in its Moodle version's namespace (4.5 `20241007XX`, 
   several areas under one field id, so a reader that needs the area joins `customfield_data` on
   `dataid`. The datasources join `s.instanceid = <instance>.id AND s.fieldid = <id>` AND an `EXISTS`
   on `customfield_data` `component`/`area` (gates CF33-CF37). Entity joins take no parameters, so the
-  names are refused unless they are plain identifiers (CF48). The 4.5 branch has no such columns on
-  `customfield_data`: it checks the area through the record's field's category.
+  names are refused unless they are plain identifiers (CF48). **This (4.5) branch** has no such
+  columns on `customfield_data` and no shared fields: the `EXISTS` joins the record's
+  `customfield_field` and `customfield_category` and checks the category's component and area. The
+  field id already pins the area, so CF35 is held by a deleted-record test and CF32 and CF36 are
+  expected survivors here (see `mutations/gates.conf`).
 
 ### Report Builder (stage D2)
 
@@ -184,9 +187,9 @@ Each branch numbers itself in its Moodle version's namespace (4.5 `20241007XX`, 
   `repeatable_<shortname>`, group `repeatable_group_<shortname>`, grouping
   `repeatable_grouping_<shortname>`; column names are the engine's. Each datasource test pins them.
 - PostgreSQL and MySQL/MariaDB only (`area_sets::db_supported()`), as the profile field.
-- The dictionary name-filter options of a shared field are scoped to the area: `repeatable_set`
-  overrides the engine's `filter_options_scope()` with an `EXISTS` over `{customfield_data}` (alias
-  `fod`) on the handler's component and area, bound as parameters.
+- The dictionary name-filter options are scoped to the area: `repeatable_set` overrides the
+  engine's `filter_options_scope()` with an `EXISTS` over `{customfield_data}` (alias `fod`), its
+  field and its category (4.5), on the handler's component and area, bound as parameters.
 - A field whose schema is unreadable keeps its rows: rewriters use `field_schema::parse()` (null →
   skip), never `from_configdata()` (empty schema → every set "vanished").
 
@@ -199,6 +202,9 @@ Each branch numbers itself in its Moodle version's namespace (4.5 `20241007XX`, 
   `editingteacher`, who has `moodle/course:update` but not `local/dictionaries:view`.
 - `tests/privacy/provider_test.php` asserts `component_is_compliant()`: plugin CI never runs core's
   compliance sweep.
+- Area handlers are singletons per class on 4.5 and 5.1: a test that creates or deletes a field
+  behind one calls `sets_report_testcase::reset_area_handlers()`; `core_customfield\handler::reset_caches()`
+  exists from 5.2 only. The shared-field tests of the 5.x branches do not exist here.
 - `.mdlshield/config.yml` pins `versions: ["5.2"]`.
 
 ## When in doubt
