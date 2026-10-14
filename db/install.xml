@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="customfield/field/repeatable/db" VERSION="2024100700"
+    COMMENT="XMLDB file for customfield_repeatable – copyright 2026 Anderson Blaine"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="customfield_repeatable_set" COMMENT="One row per set of a repeatable custom field value: a projection of customfield_data.value for reports">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="dataid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The customfield_data record the set belongs to"/>
+        <FIELD NAME="fieldid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="customfield_data.instanceid: the course, cohort, group... the value belongs to"/>
+        <FIELD NAME="set_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The set number, from 1 in payload order"/>
+        <FIELD NAME="data" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="One set as JSON, keyed by column key"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="dataid_fk" TYPE="foreign" FIELDS="dataid" REFTABLE="customfield_data" REFFIELDS="id"/>
+        <KEY NAME="fieldid_fk" TYPE="foreign" FIELDS="fieldid" REFTABLE="customfield_field" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="dataid_setid_uix" UNIQUE="true" FIELDS="dataid, set_id"/>
+        <INDEX NAME="fieldid_instanceid_ix" UNIQUE="false" FIELDS="fieldid, instanceid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
