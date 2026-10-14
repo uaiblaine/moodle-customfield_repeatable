@@ -21,7 +21,7 @@ Feature: Repeatable sets course custom field
   Scenario: Columns defined in the dialogue, two sets saved on the course and shown in the listing
     Given I log in as "admin"
     And I navigate to "Courses > Default settings > Course custom fields" in site administration
-    And I click on "Add field" "link"
+    And I click on "Add a new custom field" "link"
     And I click on "Repeatable sets" "link"
     And I set the following fields to these values:
       | Name       | Languages |
