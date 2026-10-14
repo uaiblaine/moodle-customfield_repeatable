@@ -1,0 +1,46 @@
+name: ci
+
+# workflow_dispatch is the manual escape hatch: it lets a run be launched for
+# a push whose commits would otherwise skip CI, without pushing another commit.
+#
+# push is filtered to the branches that are merge targets. Without the filter
+# every push to a feature branch ran the whole pipeline AND the pull_request
+# event ran it again on the same commit - measured at 21 jobs and ~95 billable
+# minutes per run, so exactly double for no extra information. A branch with no
+# pull request open is covered by `mdl ci <repo> --matrix` locally.
+on:
+  push:
+    branches:
+      - main
+      - 'MOODLE_*_STABLE'
+  pull_request:
+  workflow_dispatch:
+
+# Supersede a run when new commits arrive on the same pull request: pushing
+# three fixes in a row otherwise leaves three full pipelines running to the end.
+# Never on main - each merge there is the only run its commit will ever get, and
+# a second merge landing quickly must not cancel the first one's verdict.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  # One reusable-workflow call: the Moodle version this branch supports (version.php
+  # $plugin->supported), with the full PHP x DB matrix. At release every supported Moodle version
+  # gets its own MOODLE_<NNN>_STABLE branch with its own job here; keep each branch's job on a merge
+  # between them. PHPUnit and Behat run on every runtime leg.
+  #
+  # local_repeatable is a hard dependency (version.php): the engine this type adapts. It comes from
+  # main while the engine is developed there, and from MOODLE_502_STABLE from its release.
+  # local_dictionaries comes from its branch for the same Moodle version, so a contract change in
+  # either repo turns the other's CI red; customfield_pattern has one branch, main. Both are soft
+  # dependencies, installed so the tests that need them run.
+  ci-502:
+    name: Moodle 5.02
+    uses: moodle-an-hochschulen/moodle-workflows/.github/workflows/moodle-plugin-ci.yml@main
+    with:
+      moodle-core-branch: MOODLE_502_STABLE
+      plugin-dependencies: |
+        uaiblaine/moodle-local_repeatable,main
+        uaiblaine/moodle-local_dictionaries,MOODLE_502_STABLE
+        uaiblaine/moodle-customfield_pattern,main
