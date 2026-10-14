@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## Unreleased
+## [v5.2-r1] - 2026-10-14
+
+Moodle 5.2 branch (`MOODLE_502_STABLE`): version `2026042002`, release `v5.2-r1`, `MATURITY_STABLE`,
+`$plugin->supported = [502, 502]`, requires `local_repeatable` 2026042004, CI against core
+`MOODLE_502_STABLE`.
 
 First release on the one-branch-per-Moodle-version layout and the first `MATURITY_STABLE` one:
 `MOODLE_405_STABLE` (`v4.5-r1`), `MOODLE_501_STABLE` (`v5.1-r1`), `MOODLE_502_STABLE` (`v5.2-r1`,
