@@ -131,7 +131,7 @@ Each branch numbers itself in its Moodle version's namespace (4.5 `20241007XX`, 
   (`handler::restore_define_structure()` reads visible fields; `NOTVISIBLE` hides from everyone)
   and never for groups or groupings: the `course_restored` observer rebuilds the course's, groups'
   and groupings' values. `reproject_course()` matches the area on `customfield_data.component/area`,
-  which exist from Moodle 5.0: **the 4.5 branch reads it from the field's `customfield_category`.**
+  which exist from Moodle 5.1: **the 4.5 branch reads it from the field's `customfield_category`.**
 - **The configuration form is a modal `dynamic_form`**: core defines it, then renders it inside
   `start_collecting_javascript_requirements()`, so a `js_call_amd()` made while defining is lost.
   Both modules are required in the elements' render methods (`classes/form/`); never move them to
