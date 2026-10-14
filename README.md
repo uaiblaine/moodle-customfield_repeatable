@@ -20,8 +20,12 @@ each set in its own table, `customfield_repeatable_set`, for reports. The engine
 Requirements
 ------------
 
-- Moodle 5.2 (this branch; `$plugin->supported = [502, 502]`).
-- `local_repeatable` 2026042003 or later (required: the repeatable-sets engine).
+- Moodle 5.3 (branch `MOODLE_503_STABLE`; releases `v5.3-rN`), PHP 8.3 or later. Other Moodle
+  versions have their own branches.
+- PostgreSQL 17+, MySQL 8.4+ or MariaDB 11.4+, as Moodle 5.3 requires. The Report Builder sources
+  are offered on PostgreSQL and MySQL/MariaDB only.
+- `local_repeatable` 2026100500 or later, from its `MOODLE_503_STABLE` branch (required: the
+  repeatable-sets engine).
 - Optional: `local_dictionaries` (dictionary columns, with code-to-label resolution and restricted
   dictionaries) and `customfield_pattern` (masked columns). Without them those columns are plain text.
 
