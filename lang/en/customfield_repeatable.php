@@ -25,6 +25,12 @@
 $string['columns'] = 'Columns';
 $string['columns_help'] =
     'The columns each set has, as a JSON schema: {"version": 2, "columns": [{"key": "language", "label": "Language", "mode": "dictionary", "domain": "iso639", "title": true}, ...]}. With JavaScript the column editor writes it. Modes: free, dictionary (codes of a local_dictionaries domain only), dictionary_open (any code), pattern (a mask and/or regular expression from customfield_pattern; a "pattern" object with preset, mask, regex, regexerror and storeformat). Exactly one column is the title; up to 3 are shown in the subline. A column whose key holds stored values can be neither removed nor re-keyed; rename its label instead.';
+$string['datasourcecohortsets'] = 'Cohort repeatable sets';
+$string['datasourcecoursesets'] = 'Course repeatable sets';
+$string['datasourcegroupsets'] = 'Group and grouping repeatable sets';
+$string['entitygroupingsetnamed'] = '{$a} (grouping)';
+$string['entitygroupsetnamed'] = '{$a} (group)';
+$string['entitysetnamed'] = '{$a}';
 $string['errorsaverejected'] = 'The repeatable sets of field {$a} were not saved: they do not pass the field\'s checks.';
 $string['pluginname'] = 'Repeatable sets';
 $string['privacy:metadata:customfield_repeatable_set'] =

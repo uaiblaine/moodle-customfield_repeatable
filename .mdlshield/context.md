@@ -47,6 +47,33 @@ and `customfield_pattern` (masks and checks). It is the second adapter of the en
 - `classes/local/projection.php` and `classes/observer.php`: after `course_restored`, rebuild the
   restored course's, groups' and groupings' values (core writes them directly and calls the type back
   only for course fields the restorer may see); `purge_orphans()` for the daily task.
+- `classes/reportbuilder/`: three Report Builder datasources with one row per set, built on core's
+  entities and the engine's `sets` entity (one entity per repeatable field of the area, listed by the
+  area handler's `get_categories_with_fields()`, enabled shared categories included):
+  - `datasource\course_sets`: main table `course`, base condition `id != SITEID` (as core's
+    `core_course\reportbuilder\datasource\courses`), course and course category entities.
+  - `datasource\cohort_sets`: main table `cohort`, no base condition (as core's
+    `core_cohort\reportbuilder\datasource\cohorts`), the cohort entity; members are not joined.
+  - `datasource\group_sets`: main table `course`, base condition `id != SITEID`, groups and each
+    group's groupings joined as core's `core_group\reportbuilder\datasource\groups` does; members are
+    not joined.
+  - Availability of a datasource: PostgreSQL or MySQL/MariaDB (the engine's sub-item SQL has no other
+    form) and at least one repeatable field in the area. Like every core datasource, no capability of
+    its own: who may create and view custom reports is core Report Builder's (capabilities and
+    audiences).
+  - Availability of each field's columns and filters (`local\entities\repeatable_set::is_available()`):
+    the AREA handler's `can_view($field, 0)`, exactly what `core_reportbuilder\local\helpers\custom_fields`
+    sets on core's own column of the same field: a course field's visibility (`NOTVISIBLE` hides it from
+    everyone, `VISIBLETOTEACHERS` asks `moodle/course:update` in the system context); a cohort field
+    asks `moodle/cohort:manage` or `moodle/cohort:view` in the system context; a group or grouping field
+    asks `moodle/course:managegroups` or `moodle/course:view` in the global course's context.
+  - Join (`local\helpers\area_sets::entities()`): projection rows on the instance id, the field id and
+    an `EXISTS` on the `customfield_data` record's `component` and `area`, because a shared field keeps
+    one field id across areas whose instance ids collide. Report Builder entity joins take no
+    parameters, so the component and area (the plugin's own constants, refused unless they are plain
+    identifiers) and the cast field id are the only interpolated values.
+  - Every value and dictionary label goes through `s()` in the engine's entity, and the dictionary
+    filter options are escaped there (core's autocomplete prints option text unescaped).
 - SQL uses placeholders; the engine's projection upsert interpolates only the fixed table and owner
   column names `local\source` hands it.
 - Privacy: a metadata provider declaring the projection table plus core's `customfield_provider`
@@ -67,6 +94,13 @@ and `customfield_pattern` (masks and checks). It is the second adapter of the en
   the dictionary plugin's contract allows; submitted codes are not.
 - A pattern column's error message comes from `customfield_pattern` already escaped and is passed
   into the form error unescaped on purpose (engine).
+- **Report columns are available per field, not per instance**, exactly as core's own custom field
+  columns (`can_view($field, 0)`): a viewer of a report sees the sets of every instance in it. Which
+  rows a report shows to whom is Report Builder's audience and capability model, as for every core
+  datasource.
+- **Dictionary filter options of a shared field** list the codes the field holds in every area
+  (engine `sets::name_filter_options()` reads the projection by field id): a known engine residual
+  until it takes an area scope.
 
 ## De-emphasise
 

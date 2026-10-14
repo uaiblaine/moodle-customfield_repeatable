@@ -59,7 +59,21 @@ restricted dictionary the user keeps the codes already stored and cannot submit 
 
 - Course listings, core's Report Builder custom field column and web services show a compact
   summary: one line per set, the title value then the other summary values in brackets.
-- Report Builder one-row-per-set reports (course, cohort, group and grouping sources) are planned.
+- Report Builder custom reports with one row per set, from three report sources:
+  - **Course repeatable sets**: courses (site course excluded) with their category, and one entity
+    per repeatable course field.
+  - **Cohort repeatable sets**: cohorts, and one entity per repeatable cohort field.
+  - **Group and grouping repeatable sets**: courses (site course excluded), their groups and each
+    group's groupings, and one entity per repeatable group field and per repeatable grouping field.
+
+  Each field's entity has a "Set number" column and one column (two for a dictionary column: its
+  label and its code) per column of the field, each with a filter. A field's columns and filters
+  are available exactly when core shows its own custom field column to the viewer. A source is
+  offered on PostgreSQL and MySQL/MariaDB only, once its area has a repeatable field. A report
+  should use one repeatable field: two fields in one report multiply each other's sets.
+- Not yet one row per set (follow-ups): content bank, question, report custom fields, and the shared
+  custom field area as a report source of its own. Shared fields enabled for the course, cohort,
+  group or grouping area appear in that area's source, each with that area's values only.
 
 
 Capabilities
