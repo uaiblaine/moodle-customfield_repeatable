@@ -28,3 +28,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `export_value()`: a compact escaped summary, one line per set (course listings, core's Report
   Builder column, web services).
 - Privacy metadata for the projection table and core's custom field privacy callbacks.
+- Report Builder sources with one row per set (stage D2, owner decision D2): "Course repeatable sets",
+  "Cohort repeatable sets" and "Group and grouping repeatable sets", one entity per repeatable field
+  of the area (shared fields enabled for the area included, with that area's values only). Columns
+  and filters are available as core decides for its own custom field columns
+  (`handler::can_view($field, 0)` of the area); the sources mirror core's courses, cohorts and groups
+  datasources (site course excluded) and are offered on PostgreSQL and MySQL/MariaDB only. Version
+  2026042001.

@@ -87,6 +87,10 @@ classes/local/projection.php       reproject_course() (course + groups + groupin
 classes/observer.php               course_restored -> reproject_course()
 classes/task/reproject_sets.php    scheduled, daily: rebuild stale projections, purge orphans
 classes/privacy/provider.php       metadata (projection table) + core_customfield's customfield_provider
+classes/reportbuilder/datasource/  course_sets, cohort_sets, group_sets (group + grouping): one row per set
+classes/reportbuilder/local/entities/repeatable_set.php  engine `sets` subclass; is_available() = area handler's can_view($field, 0)
+classes/reportbuilder/local/helpers/area_sets.php        an area's repeatable fields, their entities and joins, the DB allowlist
+tests/classes/sets_report_testcase.php                  shared fixtures of the datasource tests
 ```
 
 No `amd/`, `templates/` or `styles.css`: they are `local_repeatable`'s.
@@ -158,7 +162,25 @@ Each branch numbers itself in its Moodle version's namespace (4.5 `20241007XX`, 
   `projector::sync()` in one delegated transaction, as must any new writer.
 - The projection carries `dataid`, `fieldid` and `instanceid`: a shared field (5.1+) can hold data in
   several areas under one field id, so a reader that needs the area joins `customfield_data` on
-  `dataid`. D2's datasources join `s.instanceid = <instance>.id AND s.fieldid = <id>` per area.
+  `dataid`. The datasources join `s.instanceid = <instance>.id AND s.fieldid = <id>` AND an `EXISTS`
+  on `customfield_data` `component`/`area` (gates CF33-CF37). Entity joins take no parameters, so the
+  names are refused unless they are plain identifiers (CF48). The 4.5 branch has no such columns on
+  `customfield_data` and must check the area through the field's category instead.
+
+### Report Builder (stage D2)
+
+- **Availability mirrors core, never a looser rule**: `repeatable_set::is_available()` is the AREA
+  handler's `can_view($field, 0)`, as `core_reportbuilder\local\helpers\custom_fields` sets on its
+  columns and filters; never `$field->get_handler()`, which for a shared field is core_customfield's
+  and shows it to everyone (gate CF32). Every availability test compares with core's own column
+  `<entity>:customfield_<shortname>` of the same field.
+- Fields are listed as core lists them: the area handler's `get_categories_with_fields()`, enabled
+  shared categories included. Entity names are saved-report identifiers: course and cohort
+  `repeatable_<shortname>`, group `repeatable_group_<shortname>`, grouping
+  `repeatable_grouping_<shortname>`; column names are the engine's. Each datasource test pins them.
+- PostgreSQL and MySQL/MariaDB only (`area_sets::db_supported()`), as the profile field.
+- Engine residual: `sets::name_filter_options()` lists the codes of the field in every area, so the
+  autocomplete options of a shared field's dictionary column include codes saved in other areas.
 - A field whose schema is unreadable keeps its rows: rewriters use `field_schema::parse()` (null →
   skip), never `from_configdata()` (empty schema → every set "vanished").
 
