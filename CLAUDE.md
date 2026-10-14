@@ -14,10 +14,15 @@ repeatable-sets engine: schema, payloads, validation, the companion bridges, wid
 renderer (templates, CSS, AMD) and the projection writer live there; this plugin is its custom field
 adapter, the second after `profilefield_repeatable`. The plan is
 `moodle-profilefield_repeatable/docs/engine-extraction-design.md` §4 and §6 stage D (D1 = this type;
-D2 = Report Builder datasources for course, cohort, group/grouping). Development on `main` = Moodle
-5.2 (`$plugin->supported = [502, 502]`, MATURITY_ALPHA); at release it splits into one
-`MOODLE_<NNN>_STABLE` branch per Moodle version (owner decision D6: 4.5 through 5.3), each with its
-own `version.php` and `ci.yml` job. Mounted at `customfield/field/repeatable` on the stacks
+D2 = Report Builder datasources for course, cohort, group/grouping). **One branch per Moodle version** (owner decision D6): `MOODLE_405_STABLE`,
+`MOODLE_501_STABLE`, `MOODLE_502_STABLE` (= `main`) and `MOODLE_503_STABLE`, MATURITY_STABLE,
+releases `v<major>.<minor>-r<N>`; the other three live in worktrees
+`~/dev/moodle-customfield_repeatable-405`, `-501` and `-503`. Each branch's `version.php` sets
+`requires`, `supported` and the `local_repeatable` dependency to its own Moodle version, and its
+`ci.yml` has one moodle-an-hochschulen job for that core branch (full PHP x DB matrix) with the
+engine and companions of the same branch — **keep `version.php` and `ci.yml` per branch on a
+merge**. The 4.5 branch also differs in code: core has no area on `{customfield_data}` and no
+shared fields there (see "Projection"). Development happens on `main` and the m502 stack. Mounted at `customfield/field/repeatable` on the stacks
 `$plugin->supported` names (`~/dev/moodle-dev/plugins.conf`, `auto`).
 
 ## Agent orchestration budget (fleet rule, repeated here on purpose)
@@ -126,7 +131,7 @@ Each branch numbers itself in its Moodle version's namespace (4.5 `20241007XX`, 
   (`handler::restore_define_structure()` reads visible fields; `NOTVISIBLE` hides from everyone)
   and never for groups or groupings: the `course_restored` observer rebuilds the course's, groups'
   and groupings' values. `reproject_course()` matches the area on `customfield_data.component/area`,
-  which exist from Moodle 5.0: **the 4.5 branch must join `customfield_category` instead.**
+  which exist from Moodle 5.1: **the 4.5 branch reads it from the field's `customfield_category`.**
 - **The configuration form is a modal `dynamic_form`**: core defines it, then renders it inside
   `start_collecting_javascript_requirements()`, so a `js_call_amd()` made while defining is lost.
   Both modules are required in the elements' render methods (`classes/form/`); never move them to
@@ -165,7 +170,7 @@ Each branch numbers itself in its Moodle version's namespace (4.5 `20241007XX`, 
   `dataid`. The datasources join `s.instanceid = <instance>.id AND s.fieldid = <id>` AND an `EXISTS`
   on `customfield_data` `component`/`area` (gates CF33-CF37). Entity joins take no parameters, so the
   names are refused unless they are plain identifiers (CF48). The 4.5 branch has no such columns on
-  `customfield_data` and must check the area through the field's category instead.
+  `customfield_data`: it checks the area through the record's field's category.
 
 ### Report Builder (stage D2)
 
