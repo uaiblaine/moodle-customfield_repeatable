@@ -16,6 +16,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   course upload and group and cohort APIs share one validator construction.
 - Deleting a record's or a field's value removes its projection rows and core's data in one transaction.
 
+### Fixed
+
+- The dictionary name-filter options of a shared field in the Report Builder sources list only the
+  codes saved in the report's own area (course, cohort, group or grouping), not those of the other
+  areas the field is enabled for. Requires local_repeatable 2026042004. Version 2026042002.
+
 ### Added
 
 - The `repeatable` custom field type (stage D1 of the repeatable-sets engine plan): column schema

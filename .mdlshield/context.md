@@ -98,9 +98,9 @@ and `customfield_pattern` (masks and checks). It is the second adapter of the en
   columns (`can_view($field, 0)`): a viewer of a report sees the sets of every instance in it. Which
   rows a report shows to whom is Report Builder's audience and capability model, as for every core
   datasource.
-- **Dictionary filter options of a shared field** list the codes the field holds in every area
-  (engine `sets::name_filter_options()` reads the projection by field id): a known engine residual
-  until it takes an area scope.
+- **Dictionary filter options of a shared field** are scoped to the report's area:
+  `repeatable_set::filter_options_scope()` adds an `EXISTS` over `{customfield_data}` on the
+  handler's component and area, bound as parameters, to the engine's options query.
 
 ## De-emphasise
 
