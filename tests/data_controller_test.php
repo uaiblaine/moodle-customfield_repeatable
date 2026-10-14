@@ -245,7 +245,7 @@ final class data_controller_test extends \advanced_testcase {
      */
     private function validate(field_controller $field, int $courseid, array $data): array {
         $fieldid = (int)$field->get('id');
-        $controller = course_handler::create()->get_instance_fields_data([$fieldid => $field], $courseid)[$fieldid];
+        $controller = \core_customfield\api::get_instance_fields_data([$fieldid => $field], $courseid)[$fieldid];
         return $controller->instance_form_validation($data + ['id' => $courseid], []);
     }
 

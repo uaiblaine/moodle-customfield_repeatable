@@ -119,7 +119,7 @@ final class dictionary_codes_test extends \advanced_testcase {
         $fieldid = (int)$this->field->get('id');
         $editable = course_handler::create()->get_editable_fields($courseid);
         $this->assertArrayHasKey($fieldid, $editable);
-        $data = course_handler::create()->get_instance_fields_data([$fieldid => $editable[$fieldid]], $courseid)[$fieldid];
+        $data = \core_customfield\api::get_instance_fields_data([$fieldid => $editable[$fieldid]], $courseid)[$fieldid];
         return $data->instance_form_validation(['id' => $courseid, $this->elementname => json_encode($payload)], []);
     }
 
