@@ -80,6 +80,14 @@ restricted dictionary the user keeps the codes already stored and cannot submit 
   group or grouping area appear in that area's source, each with that area's values only.
 
 
+Settings
+--------
+
+The plugin has no site settings. Each field's columns are its configuration, set in the field's
+settings and stored by core in `customfield_field.configdata`; who sees and edits the field follows
+core's per-field settings (visibility, locked) for the area.
+
+
 Capabilities
 ------------
 
@@ -87,13 +95,28 @@ The plugin declares none: who may see and edit a value is decided by the custom 
 courses, the field's visibility and locked settings and the course capabilities).
 
 
-Privacy
--------
+Data stored
+-----------
 
-The value is stored by core in `customfield_data` and handled by core's custom field privacy API.
-The plugin's table `customfield_repeatable_set` holds a copy of each set (no user id); it is declared
-in the privacy metadata, the export writes the sets as plain text, and core's deletions delete the
-copies too.
+- **The value** of each field on each instance is stored by core in `customfield_data`, as one JSON
+  object (the sets and their column values), and handled by core's custom field privacy API like any
+  other custom field type: the component of each area (courses, cohorts, groups...) finds, exports
+  and deletes it. Core keeps it until the instance or the field is deleted.
+- **`customfield_repeatable_set`**, the plugin's only table, holds a copy of each set for Report
+  Builder: the `customfield_data` record, the field and the instance it belongs to, the set number,
+  the set's values as JSON, and when the row was created and last changed. It holds no user id. The
+  rows are rewritten on every save of the value and after a course restore, removed with the value
+  when core deletes the instance's custom field data (course or cohort deletion) and with the field
+  when the field is deleted, and the daily task "Rebuild repeatable custom field sets for reports"
+  rebuilds stale rows and removes rows whose value or field is gone. Group deletion leaves the
+  group's `customfield_data` in place (core), and the copy stays with it.
+
+The plugin stores nothing else: no setting, user preference, file or cache of its own.
+
+Privacy API: the provider declares `customfield_repeatable_set` and plugs into core's custom field
+privacy API, as every core custom field type does. When core exports a value, the export carries
+every set as plain text (each column name with its value) instead of the one-line summary; when
+core deletes values or fields, their copies in `customfield_repeatable_set` are deleted first.
 
 
 Troubleshooting
@@ -105,6 +128,14 @@ Troubleshooting
 - **A report lists sets that were changed or a restored course shows no sets in reports**: the
   projection is rebuilt after every save, after a course restore and by the daily task "Rebuild
   repeatable custom field sets for reports"; run that task to repair other direct writes.
+
+
+Translations
+------------
+
+The English strings ship in the package. The Brazilian Portuguese translation is maintained in this
+repository (`lang/pt_br`) and reaches sites through [AMOS](https://lang.moodle.org/), as the plugins
+directory requires; it is left out of the release package.
 
 
 License
