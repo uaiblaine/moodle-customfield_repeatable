@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [v5.1-r2] - Unreleased
+
+Version `2025100601`, release `v5.1-r2`: the plugins directory's submission guidelines, applied after
+a directory review of a sibling plugin found four defects no CI gate read. No code path of the plugin
+changed: it stamps no core row with its component and shows no native user field, so the privacy
+and user-field shapes of that review do not apply.
+
+### Added
+
+- A `LICENSE` file beside `COPYING.txt`, both the GPL v3 text: the plugins directory requires a
+  licence file in the package, and the MAH completeness check still requires `COPYING.txt`.
+- `tests/marketplace_readiness_test.php`, the fleet's file-reading test of the directory
+  requirements: both licence files ship, only English strings ship, language files are data only,
+  the README names the table and the `local_repeatable` dependency, every source file carries the
+  boilerplate, and core rows stamped with the component would be covered by the privacy provider.
+  Mutation gates CF50-CF56 hold each check.
+
+### Changed
+
+- `lang/pt_br` is left out of the release package (`export-ignore`). It stays in this repository in
+  step with `lang/en` and reaches sites through AMOS, as the directory accepts only English strings
+  in a package.
+- README: *Privacy* becomes *Data stored* (where the value lives, what `customfield_repeatable_set`
+  keeps, what rewrites and removes its rows, what a data request exports and a deletion does), and
+  *Settings* and *Translations* sections are added.
+
 ## [v5.1-r1] - 2026-10-14
 
 Moodle 5.1 branch (`MOODLE_501_STABLE`): version `2025100600`, release `v5.1-r1`, `MATURITY_STABLE`,
