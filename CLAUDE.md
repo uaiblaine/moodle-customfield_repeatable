@@ -155,8 +155,16 @@ Each branch numbers itself in its Moodle version's namespace (4.5 `20241007XX`, 
   and throws `errorsaverejected` (the field name only, never a code, label or domain): web services
   (`core_course_*_courses`), the course upload tool, group and cohort library functions, because
   core skips `instance_form_validation()` there (gates CF29, CF30). The one path that writes without
-  the type is core's restore: it copies a value a user could already see on the source, and a crafted
-  backup is restore-capability-gated (residual, by design).
+  the type is core's restore (`restore_instance_data_from_backup()`); `restore_define_structure()` and
+  the `course_restored` observer only reproject, they validate nothing. **Residual, by design:** a
+  restorer who may edit the field (core restores only `get_editable_fields()`, so a locked field is
+  out of reach without `moodle/course:changelockedcustomfields`) but cannot read a restricted domain
+  can upload a hand-made `.mbz` with codes of their choosing, many sets in one backup, and read
+  their labels in `summary::html()`, the Report Builder column and the edit form (stored codes are
+  exempt): a label oracle on that domain. Unlike a genuine backup, nothing validated those codes,
+  and the gate is not a trusted role: `moodle/restore:restorecourse` and `restore:uploadfile` go to
+  `editingteacher` by default. The labels come from `\local_dictionaries\resolver`, which checks no
+  capability by its own contract.
 - **No oracle on restricted dictionaries**: every path that turns a SUBMITTED code into an answer is
   decided on `can_read_domain()` of the editing user, with the stored codes of THIS instance as the
   only exemption (engine rules B11-B18).
